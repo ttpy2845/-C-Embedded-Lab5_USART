@@ -1,0 +1,37 @@
+# Build artifacts
+/Debug/
+/Release/
+/build/
+/Makefile.*
+*.o
+*.d
+*.elf
+*.map
+*.hex
+*.bin
+*.lst
+
+# Temporary / backup files
+*~
+*.bak
+*.swp
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CubeMX / CubeIDE
+*.ioc.bak
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Local IDE metadata (ігноруємо, якщо не хочеш комітити локальні налаштування)
+.metadata/
+.settings/
+
+# Toolchains / outputs
+/toolchain/
+/build_outputs/
