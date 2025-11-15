@@ -55,6 +55,7 @@ UART_HandleTypeDef huart2;
 #define RED_PIN GPIO_PIN_14
 #define BLUE_PIN GPIO_PIN_15
 
+uint8_t rx_command;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,6 +111,11 @@ int main(void)
   MX_USB_HOST_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Receive_IT(&huart2, &rx_command, 1);
+  //Примітка: у версії 2 використав переривання, адже це явно краще рішення.
+  // Хоть у версії 1 в нас блокування становить максимум 10мс (останній аргумент HAL_UART_Receive), це все одно є непрактичним
+  // у системах, де є інші задачі, крім зчитування значення з UART
+
 
   /* USER CODE END 2 */
 
@@ -117,57 +123,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint8_t rx_command;
 
-	  HAL_UART_Receive(&huart2, &rx_command, 1, 10); // Polling
-
-	  switch (rx_command) {
-
-	  	  case 'Q': // Зелений +
-	          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_SET);
-	          break;
-	      case 'A': // Зелений -
-	          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_RESET);
-	          break;
-
-	      case 'W': // Оранжевий +
-	          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_SET);
-	          break;
-	      case 'S': // Оранжевий -
-	          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_RESET);
-	          break;
-
-	      case 'E': // Червоний +
-	          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_SET);
-	          break;
-	      case 'D': // Червоний -
-	          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_RESET);
-	          break;
-
-	      case 'R': // Синій +
-	          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_SET);
-	          break;
-	      case 'F': // Синій -
-	          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_RESET);
-	          break;
-
-	      case '1': // Усі +
-	          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_SET);
-	          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_SET);
-	          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_SET);
-	          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_SET);
-	          break;
-	      case '0': // Усі -
-	          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_RESET);
-	          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_RESET);
-	          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_RESET);
-	          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_RESET);
-	          break;
-
-	      default:
-	    	  break;
-
-	  }
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
@@ -459,6 +415,63 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART2) {
+        process_uart_command(rx_command);
+        HAL_UART_Receive_IT(&huart2, &rx_command, 1);
+    }
+}
+
+void process_uart_command(uint8_t command) {
+	switch (command) {
+
+		  	  case 'Q': // Зелений +
+		          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_SET);
+		          break;
+		      case 'A': // Зелений -
+		          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_RESET);
+		          break;
+
+		      case 'W': // Оранжевий +
+		          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_SET);
+		          break;
+		      case 'S': // Оранжевий -
+		          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_RESET);
+		          break;
+
+		      case 'E': // Червоний +
+		          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_SET);
+		          break;
+		      case 'D': // Червоний -
+		          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_RESET);
+		          break;
+
+		      case 'R': // Синій +
+		          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_SET);
+		          break;
+		      case 'F': // Синій -
+		          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_RESET);
+		          break;
+
+		      case '1': // Усі +
+		          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_SET);
+		          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_SET);
+		          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_SET);
+		          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_SET);
+		          break;
+		      case '0': // Усі -
+		          HAL_GPIO_WritePin(GPIOD, GREEN_PIN, GPIO_PIN_RESET);
+		          HAL_GPIO_WritePin(GPIOD, ORANGE_PIN, GPIO_PIN_RESET);
+		          HAL_GPIO_WritePin(GPIOD, RED_PIN, GPIO_PIN_RESET);
+		          HAL_GPIO_WritePin(GPIOD, BLUE_PIN, GPIO_PIN_RESET);
+		          break;
+
+		      default:
+		    	  break;
+
+		  }
+}
+
 
 /* USER CODE END 4 */
 
